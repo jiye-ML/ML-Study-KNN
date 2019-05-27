@@ -1,101 +1,1 @@
-"""
-http://blog.csdn.net/pipisorry/article/details/53156836
-http://scikit-learn.org/stable/modules/neighbors.html
-http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KDTree.html#sklearn.neighbors.KDTree
-http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.BallTree.html#sklearn.neighbors.BallTree
-"""
-import numpy as np
-from time import clock
-from random import randint
-from sklearn.neighbors import KDTree, BallTree
-
-
-# 随机数据
-class RandomData(object):
-
-    # 产生一个k维随机向量，每维分量值在0~1之间
-    @staticmethod
-    def random_point(dim):
-        return [randint(0, 50) for _ in range(dim)]
-
-    # 产生n个k维随机向量
-    def random_points(self, dim, n):
-        return [self.random_point(dim) for _ in range(n)]
-
-    pass
-
-
-# 使用kd-tree
-class CalDistanceByKDTree(object):
-
-    def __init__(self, data, k):
-        self.k = k + 1
-        self.data = data
-        self.data_length = len(self.data)
-        self.kd_tree = KDTree(self.data, leaf_size=self.data_length//2)  # 构建kd树
-        pass
-
-    def __call__(self):
-        # 计算距离
-        kd_dist, kd_ind = self._query_all()
-
-        # 返回的数据
-        org_point = self.data
-        k_dist = np.sum(kd_dist, axis=1) / (self.k - 1)
-        k_point = [[self.data[ind] for ind in inds] for inds in kd_ind]
-        return org_point, k_dist, k_point, kd_ind
-
-    def _query_all(self):
-        kd_dist, kd_ind = self.kd_tree.query(self.data, k=self.k)
-        kd_dist, kd_ind = kd_dist[:, 1:], kd_ind[:, 1:]
-        return kd_dist, kd_ind
-
-    def query_radius(self, point, radius):
-        ind = self.kd_tree.query_radius(point, r=radius)
-        return ind
-
-    def query_one(self, point, k = None):
-        kd_dist, kd_ind = self.kd_tree.query([point], k=self.k if k is None else k)
-        return kd_dist[0], kd_ind[0]
-
-    # 通过坐标和k查找相应的点
-    def query(self, point_index, k):
-        data = [self.data[index] for index in point_index]
-        kd_dist, kd_ind = self.kd_tree.query(data, k=k)
-        return kd_dist[:, 1:], kd_ind[:, 1:]
-
-    def test_query_one(self):
-        _time_1 = clock()
-        for index in range(10000):
-            point_now = RandomData.random_point(dim=2)
-            kd_dist, kd_ind = self.query_one(point_now)
-            pass
-        _time_2 = clock()
-        print(_time_1 - _time_2)
-        pass
-
-    def test_query_all(self):
-        _time_1 = clock()
-        self._query_all()
-        _time_2 = clock()
-        print(_time_1 - _time_2)
-
-    @staticmethod
-    def main_test():
-        data_n = RandomData().random_points(dim=2, n=10000)
-        time_1 = clock()
-        cal_dis = CalDistanceByKDTree(data=data_n, k=5)
-        time_2 = clock()
-        print(time_2 - time_1)
-
-        cal_dis.test_query_one()
-
-        cal_dis.test_query_all()
-        pass
-
-    pass
-
-if __name__ == '__main__':
-    data_n = RandomData().random_points(dim=2, n=100)
-    org_point, k_dist, k_point, k_id = CalDistanceByKDTree(data=data_n, k=5)()
-    pass
+'''http://blog.csdn.net/pipisorry/article/details/52186307http://scikit-learn.org/stable/modules/neighbors.htmlhttp://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KDTree.html#sklearn.neighbors.KDTree'''import numpy as npimport picklefrom sklearn.neighbors import KDTree'''查询某个元素的k近邻'''# Pickle and Unpickle a tree. Note that the state of the tree is saved in the pickle operation:# the tree needs not be rebuilt upon unpickling.np.random.seed(0)X = np.random.random((10, 3))  # 10 points in 3 dimensionstree = KDTree(X, leaf_size=2)s = pickle.dumps(tree)tree_copy = pickle.loads(s)dist, ind = tree_copy.query([X[0]], k=3)print(ind)  # indices of 3 closest neighborsprint(dist)  # distances to 3 closest neighbors'''查询某个元素的半径下的近邻'''print("查询某个元素的半径下的近邻")np.random.seed(0)X = np.random.random((10, 3))  # 10 points in 3 dimensionstree = KDTree(X, leaf_size=2)print(tree.query_radius([X[0]], r=0.3, count_only=True))ind = tree.query_radius([X[0]], r=0.3)print(ind)  # indices of neighbors within distance 0.3'''query(X, k=1, return_distance=True, dualtree=False, breadth_first=False)'''print("\n测试 query 方法")tree = KDTree(X, leaf_size=2)dist, ind = tree.query([X[0]], k=3)print(ind)  # indices of 3 closest neighborsprint(dist)  # distances to 3 closest neighbors'''query_radius(self, X, r, count_only = False):'''print("\n测试 query_radius 方法")tree = KDTree(X, leaf_size=2)print(tree.query_radius([X[0]], r=0.3, count_only=True))ind = tree.query_radius([X[0]], r=0.3)print(ind)  # indices of neighbors within distance 0.3
